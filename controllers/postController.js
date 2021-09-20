@@ -48,6 +48,29 @@ class Post {
         }
     }
 
+    async getPost(req, res) {
+
+        try {
+
+            const { postId } = req.params
+
+
+            const post = await postSchema.findById(postId)
+                .populate({ path: "user", select: 'name' })
+                .populate({ path: "category", select: 'name url' })
+                .sort({ likes: -1 })
+
+            if (post)
+                return res.status(200).send({ sucess: true, message: "Post found", data: post })
+            else
+                return res.status(200).send({ sucess: true, message: "No Posts found" })
+
+        } catch (error) {
+            throw error
+        }
+    }
+
+
     async updatePost(req, res) {
 
         try {
