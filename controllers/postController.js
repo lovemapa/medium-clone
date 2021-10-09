@@ -1,5 +1,5 @@
 const postSchema = require('../models/post');
-const categoryRouter = require('../routes/categoryRoutes');
+const postBookmakSchema = require('../models/bookMarkPost')
 class Post {
 
 
@@ -115,6 +115,74 @@ class Post {
 
                 return res.status(200).send({ sucess: true, message: "Updated Successfully", data: updatedPost })
 
+
+        } catch (error) {
+            throw error
+        }
+    }
+
+
+    async bookMarkPost(req, res) {
+        try {
+
+            const postId = req.params.postId
+
+            if (postId && req.userId) {
+
+
+                const bookMarkPost = new postBookmakSchema({
+                    user: req.userId,
+                    post: postId
+                })
+
+                await bookMarkPost.save()
+                if (bookMarkPost)
+                    return res.status(201).send({ sucess: true, message: "Post Bookmarked" })
+                else {
+                    return res.status(500).send({ sucess: false, message: "Post couldn't be bookmarked" })
+                }
+            }
+            else {
+                return res.status(400).send({ sucess: false, message: "PostId is required" })
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async removeBookMarkPost(req, res) {
+        try {
+
+            const postId = req.params.postId
+
+            if (postId) {
+
+                const removedBookmarked = await postBookmakSchema.findByIdAndDelete(postId)
+                if (removedBookmarked)
+                    return res.status(200).send({ sucess: true, message: "Removed Bookmarked" })
+                else {
+                    return res.status(500).send({ sucess: false, message: "Post couldn't be un-bookmarked" })
+                }
+            }
+            else {
+                return res.status(400).send({ sucess: false, message: "PostId is required" })
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getBookmarkedPosts(req, res) {
+
+        try {
+
+            const bookmarkedPost = await postBookmakSchema.find({ user: req.userId }, { user: 0, createdAt: 0, updatedAt: 0 })
+                .populate({ path: "post", select: 'body title category', populate: { path: "category", select: 'name url' } })
+
+            if (bookmarkedPost.length)
+                return res.status(200).send({ sucess: true, message: "Post found", data: bookmarkedPost })
+            else
+                return res.status(200).send({ sucess: true, message: "Not bookmarked Yet" })
 
         } catch (error) {
             throw error
