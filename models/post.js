@@ -14,9 +14,21 @@ var postSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'category'
     },
-    likes: { type: Number, default: 0 }
 
 
 }, { timestamps: true, versionKey: false })
+
+
+postSchema.set('toJSON', {
+    virtuals: true
+});
+
+// postSchema.virtual('totalLikes', {
+//     ref: 'likePost',
+//     localField: '_id',
+//     foreignField: 'post',
+//     count: true
+
+// })
 
 module.exports = mongoose.model('post', postSchema);

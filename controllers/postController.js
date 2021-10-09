@@ -1,5 +1,7 @@
 const postSchema = require('../models/post');
 const postBookmakSchema = require('../models/bookMarkPost')
+const Mongoose = require('mongoose');
+const likePostSchema = require('../models/likePost')
 class Post {
 
 
@@ -32,11 +34,99 @@ class Post {
             let searchQuery = {}
 
             if (category)
-                searchQuery.category = category
-            const posts = await postSchema.find(searchQuery)
-                .populate({ path: "user", select: 'name' })
-                .populate({ path: "category", select: 'name url' })
-                .sort({ likes: -1 })
+                searchQuery.category = Mongoose.Types.ObjectId(category)
+
+            const posts = await postSchema.aggregate([
+                {
+                    "$match": searchQuery
+                },
+                {
+                    $lookup: {
+                        from: "likeposts",
+                        localField: "_id",
+                        foreignField: "post",
+                        as: "likes"
+                    }
+                },
+                {
+
+                    $lookup: {
+                        from: "categories",
+                        localField: "category",
+                        foreignField: "_id",
+                        as: "category"
+                    }
+                },
+                {
+
+                    $lookup: {
+                        from: "users",
+                        localField: "user",
+                        foreignField: "_id",
+                        as: "user"
+                    }
+                },
+                {
+                    $unwind: "$category"
+                },
+                {
+                    $unwind: "$user"
+                },
+                {
+                    $group: {
+                        _id: "$_id",
+                        totalLikes: {
+                            $sum: {
+                                $size: "$likes"
+                            }
+                        },
+                        title: { $first: "$title" },
+                        category: { $first: "$category" },
+                        body: { $first: "$body" },
+                        user: { $first: "$user" },
+                        likesArray: { $first: "$likes" },
+                        createdAt: { $first: "$createdAt" },
+                        updatedAt: { $first: "$updatedAt" },
+
+                    }
+                },
+                {
+                    $project: {
+                        totalLikes: 1,
+                        title: 1,
+                        category: 1,
+                        body: 1,
+                        "user.name": 1,
+                        // Check if post is liked by login user
+                        isLiked: {
+                            "$cond": {
+                                "if": {
+                                    "$eq": [{
+                                        $size: {
+                                            $filter: {
+                                                input: "$likesArray",
+                                                as: "item",
+                                                cond: { $eq: ["$$item.user", Mongoose.Types.ObjectId(req.userId)] }
+                                            }
+                                        }
+                                    }, 1]
+                                },
+                                "then": true,
+                                "else": false
+                            }
+                        },
+                        createdAt: 1,
+                        updatedAt: 1
+                    }
+                },
+                {
+                    $sort: {
+                        totalLikes: -1
+                    }
+                }
+            ]);
+
+
 
             if (posts.length)
                 return res.status(200).send({ sucess: true, message: "Posts found", data: posts })
@@ -187,6 +277,63 @@ class Post {
         } catch (error) {
             throw error
         }
+    }
+
+
+    async likePost(req, res) {
+        try {
+
+            const postId = req.params.postId
+
+            if (postId && req.userId) {
+
+                const isAlreadyLiked = await likePostSchema.findOne({
+                    user: req.userId,
+                    post: postId
+                })
+
+                if (isAlreadyLiked) {
+                    return res.status(400).send({ sucess: false, message: "Post already liked" })
+                }
+                else {
+
+                    const likePost = new likePostSchema({
+                        user: req.userId,
+                        post: postId
+                    })
+
+                    await likePost.save()
+                    if (likePost)
+                        return res.status(200).send({ sucess: true, message: "Post liked" })
+                    else {
+                        return res.status(500).send({ sucess: false, message: "Post couldn't be liked" })
+                    }
+                }
+
+            }
+            else {
+                return res.status(400).send({ sucess: false, message: "PostId is required" })
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+    async unlikePost(req, res) {
+
+        const postId = req.params.postId
+        if (postId) {
+
+            const deletedPost = await likePostSchema.findOneAndDelete({ post: postId, user: req.userId })
+
+            if (deletedPost) {
+                return res.status(200).send({ sucess: true, message: "Post unliked" })
+            }
+            else {
+                return res.status(200).send({ sucess: true, message: "Post doesn't exist" })
+            }
+
+        }
+
     }
 }
 
