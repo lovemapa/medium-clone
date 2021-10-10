@@ -9,8 +9,8 @@ postRouter.post('/', isUserAuthorized.authenticateUser, postController.createPos
 postRouter.patch('/:postId', isUserAuthorized.authenticateUser, postController.updatePost)
 
 //BOOK MARK
-postRouter.get('/book-marked', isUserAuthorized.authenticateUser, postController.getBookmarkedPosts)
 postRouter.post('/add-bookmark/:postId', isUserAuthorized.authenticateUser, postController.bookMarkPost)
+postRouter.get('/book-marked', isUserAuthorized.authenticateUser, postController.getBookmarkedPosts)
 postRouter.delete('/remove-bookmark/:postId', isUserAuthorized.authenticateUser, postController.removeBookMarkPost)
 
 //LIKE POST
@@ -19,5 +19,5 @@ postRouter.delete('/unlike/:postId', isUserAuthorized.authenticateUser, postCont
 
 
 postRouter.get('/', isUserAuthorized.authenticateUser, postController.getPosts)
-postRouter.get('/:postId', postController.getPost)
+postRouter.get('/:postId', isUserAuthorized.authenticateUser, postController.getPost)
 module.exports = postRouter

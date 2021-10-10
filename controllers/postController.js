@@ -146,6 +146,8 @@ class Post {
 
 
             const post = await postSchema.findById(postId)
+                .populate('totalLikes')
+                .populate({ path: 'isLiked', match: { user: req.userId } })
                 .populate({ path: "user", select: 'name' })
                 .populate({ path: "category", select: 'name url' })
                 .sort({ likes: -1 })
@@ -219,17 +221,26 @@ class Post {
 
             if (postId && req.userId) {
 
-
-                const bookMarkPost = new postBookmakSchema({
+                const isAlreadyBookmarked = await postBookmakSchema.findOne({
                     user: req.userId,
                     post: postId
                 })
-
-                await bookMarkPost.save()
-                if (bookMarkPost)
-                    return res.status(201).send({ sucess: true, message: "Post Bookmarked" })
+                if (isAlreadyBookmarked) {
+                    return res.status(500).send({ sucess: false, message: "Post already bookmarked" })
+                }
                 else {
-                    return res.status(500).send({ sucess: false, message: "Post couldn't be bookmarked" })
+                    const bookMarkPost = new postBookmakSchema({
+                        user: req.userId,
+                        post: postId
+                    })
+
+                    await bookMarkPost.save()
+                    if (bookMarkPost)
+                        return res.status(201).send({ sucess: true, message: "Post Bookmarked" })
+                    else {
+                        return res.status(500).send({ sucess: false, message: "Post couldn't be bookmarked" })
+                    }
+
                 }
             }
             else {
@@ -267,9 +278,9 @@ class Post {
         try {
 
             const bookmarkedPost = await postBookmakSchema.find({ user: req.userId }, { user: 0, createdAt: 0, updatedAt: 0 })
-                .populate({ path: "post", select: 'body title category', populate: { path: "category", select: 'name url' } })
+                .populate({ path: "post", select: 'body title category', populate: 'isLiked', populate: { path: "category", select: 'name url' } })
 
-            if (bookmarkedPost.length)
+            if (bookmarkedPost)
                 return res.status(200).send({ sucess: true, message: "Post found", data: bookmarkedPost })
             else
                 return res.status(200).send({ sucess: true, message: "Not bookmarked Yet" })
