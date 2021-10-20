@@ -305,8 +305,16 @@ class Post {
                     post: postId
                 })
 
+                const selfCreatedPost = await postSchema.findById(postId)
+
+
+
                 if (isAlreadyLiked) {
                     return res.status(400).send({ sucess: false, message: "Post already liked" })
+                }
+
+                else if (selfCreatedPost && selfCreatedPost.user == req.userId) {
+                    return res.status(400).send({ sucess: false, message: "You cannot like your own post" })
                 }
                 else {
 
