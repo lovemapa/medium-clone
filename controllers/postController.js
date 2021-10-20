@@ -168,7 +168,7 @@ class Post {
         try {
 
 
-            const { name, title, category, likes } = req.body
+            const { name, title, category, likes, body } = req.body
             const postId = req.params.postId
             let updateQuery = {}
 
