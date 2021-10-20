@@ -191,6 +191,8 @@ class Post {
                     if (title)
                         updateQuery.title = title;
 
+                    if (body)
+                        updateQuery.body = body;
 
                     if (category)
                         updateQuery.category = category;
