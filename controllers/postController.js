@@ -330,8 +330,11 @@ class Post {
 
                     const reciever = await userSchema.findById(selfCreatedPost.user)
 
+                    const whoLiked = await userSchema.findById(req.userId)
+
+
                     if (reciever.deviceToken)
-                        await helperClass.sendPushNotification(reciever.deviceToken, reciever.name, selfCreatedPost)
+                        await helperClass.sendPushNotification(reciever.deviceToken, whoLiked.name, selfCreatedPost)
                     await likePost.save()
                     if (likePost)
                         return res.status(200).send({ sucess: true, message: "Post liked" })
