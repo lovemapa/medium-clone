@@ -5,6 +5,10 @@ const uuid = require('node-uuid');
 const credentials = new AWS.SharedIniFileCredentials({ profile: 'b2' });
 AWS.config.credentials = credentials;
 
+//FCM Notification
+const FCM = require('fcm-node');
+const serverKey = `AAAAQpl5cmk:APA91bGW807K2C2FYmxaDW9cTfLY9h-E-ueYsxPOUvKx3gSeDx-cwXz4UpQ2hUYg75gvog3P1WxK7j4Av5-HxxqrzCj8MlBm2BCLy2ifcBt9s_YqpzljBgZD1u0no1xTJ3tavGas39TQ`; //put your server key here
+const fcm = new FCM(serverKey);
 
 
 
@@ -44,7 +48,7 @@ class helperFunction {
         const keyName = 'hello_world.txt'
 
         s3.createBucket({ Bucket: bucketName }, function () {
-            var params = { Bucket: bucketName, Key: keyName, Body: 'Hello World!', ACL: "public-read" };
+            const params = { Bucket: bucketName, Key: keyName, Body: 'Hello World!', ACL: "public-read" };
 
             s3.putObject(params, function (err, data) {
                 console.log(data);
@@ -57,6 +61,43 @@ class helperFunction {
 
     }
 
+
+    async sendPushNotification(token, recieverName, body) {
+
+        try {
+
+
+            const message = {
+                to: token,
+                collapse_key: 'your_collapse_key',
+
+                notification: {
+                    title: `${recieverName} has liked your post`,
+                    body: {
+                        postId: body._id,
+                        body: body.body
+                    }
+                },
+
+                // data: {  //you can send only notification or only data(or include both)
+                //     my_key: 'my value',
+                //     my_another_key: 'my another value'
+                // }
+            };
+
+            fcm.send(message, function (err, response) {
+                if (err) {
+                    console.log("Something has gone wrong!");
+                } else {
+                    console.log("Successfully sent with response: ", response);
+                }
+            });
+        } catch (error) {
+
+            throw error
+        }
+
+    }
 
 }
 

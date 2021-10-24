@@ -2,6 +2,11 @@ const postSchema = require('../models/post');
 const postBookmakSchema = require('../models/bookMarkPost')
 const Mongoose = require('mongoose');
 const likePostSchema = require('../models/likePost')
+const userSchema = require('../models/user')
+const helpers = require('../helpers/helperFunctions')
+const helperClass = new helpers()
+
+
 class Post {
 
 
@@ -297,6 +302,7 @@ class Post {
         try {
 
             const postId = req.params.postId
+            const selfCreatedPost = await postSchema.findById(postId)
 
             if (postId && req.userId) {
 
@@ -305,7 +311,6 @@ class Post {
                     post: postId
                 })
 
-                const selfCreatedPost = await postSchema.findById(postId)
 
 
 
@@ -323,6 +328,10 @@ class Post {
                         post: postId
                     })
 
+                    const reciever = await userSchema.findById(selfCreatedPost.user)
+
+                    if (reciever.deviceToken)
+                        await helperClass.sendPushNotification(reciever.deviceToken, reciever.name, selfCreatedPost)
                     await likePost.save()
                     if (likePost)
                         return res.status(200).send({ sucess: true, message: "Post liked" })
