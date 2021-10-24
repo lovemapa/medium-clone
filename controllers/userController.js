@@ -40,11 +40,15 @@ class User {
 
     async login(req, res) {
         try {
-            const { email, password } = req.body
+            const { email, password, deviceToken } = req.body
 
 
             if (!email.toLowerCase() || !password) {
                 return res.status(400).send({ sucess: false, message: "Email or Password missing", data: null })
+            }
+
+            if (!deviceToken) {
+                return res.status(400).send({ sucess: false, message: "Device token is required", data: null })
             }
             const doesUserExists = await userSchema.findOne({ email: email.toLowerCase() })
 
@@ -56,7 +60,7 @@ class User {
 
                     const token = helperClass.authTokenGenerate(doesUserExists.email, doesUserExists._id)
 
-                    const updatedUser = await userSchema.findByIdAndUpdate(doesUserExists._id, { token: token }, { new: true })
+                    const updatedUser = await userSchema.findByIdAndUpdate(doesUserExists._id, { token: token, deviceToken: deviceToken }, { new: true })
 
                     return res.status(200).send({ sucess: true, message: "Login Successfull", data: updatedUser })
                 }

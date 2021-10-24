@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 
 var userSchema = new Schema({
     name: { type: String, required: true },
+    deviceToken: { type: String, required: false },
     contact: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     gender: {
