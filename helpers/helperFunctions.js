@@ -73,10 +73,7 @@ class helperFunction {
 
                 notification: {
                     title: `${recieverName} has liked your post`,
-                    body: {
-                        postId: body._id,
-                        body: body.body
-                    }
+                    body
                 },
 
                 // data: {  //you can send only notification or only data(or include both)
